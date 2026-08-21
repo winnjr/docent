@@ -739,6 +739,17 @@ function parseTourDate(s) {
   return { start: iso(m[4], mo, m[2]), end: iso(m[4], mo, m[3] || m[2]) };
 }
 
+// Tours drop off the tracker RETENTION_DAYS after their end date. The window is
+// deliberately not "yesterday": docent comments can only be left on a completed
+// tour, so a tour must stay visible for a few days after it happens.
+var RETENTION_DAYS = 7;
+
+function cutoffISO() {
+  var t = new Date();
+  t.setDate(t.getDate() - RETENTION_DAYS);
+  return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
+}
+
 function todayISO() {
   var t = new Date();
   return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
@@ -777,12 +788,17 @@ function load() {
         comments: g("comments"), needed: g("needed"), confirmedCt: g("confirmedCt"),
         dateStart: dates.start, dateEnd: dates.end
       };
-    }).filter(function(r) {
+    });
+    var cutoff = cutoffISO();
+    requests = requests.filter(function(r) {
       if (r.org === "") return false;
       // A tour is live only once approved (Approved? = YES) and a docent count is set
       if (!/^y/i.test(r.approved)) return false;
       var needed = parseInt(r.needed, 10);
       if (isNaN(needed) || needed < 1) return false;
+      // Past tours fall off once they are older than the retention window.
+      // Undated rows parse to "9999-99-99" and are never hidden by this test.
+      if (r.dateEnd < cutoff) return false;
       return true;
     });
     renderSummary();
