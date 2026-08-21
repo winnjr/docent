@@ -731,12 +731,31 @@ function parseCSV(text) {
 }
 
 function parseTourDate(s) {
+  // The sheet is not consistent about date format. Month-name dates ("Aug 21, 2026")
+  // and numeric dates ("8/21/2026") both occur, and either may carry a day range.
+  // Anything unparseable falls back to "9999-99-99" so an undated row is treated as
+  // far-future: it is never auto-completed and never aged off the tracker.
   var months = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
-  var m = (s || "").toLowerCase().match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:\s*[-–]\s*(\d{1,2}))?,?\s+(\d{4})/);
-  if (!m) return { start: "9999-99-99", end: "9999-99-99" };
+  var t = (s || "").toLowerCase();
   function iso(y, mo, d) { return y + "-" + String(mo).padStart(2, "0") + "-" + String(d).padStart(2, "0"); }
-  var mo = months[m[1]];
-  return { start: iso(m[4], mo, m[2]), end: iso(m[4], mo, m[3] || m[2]) };
+
+  // "Aug 21, 2026" / "Aug 21-22, 2026"
+  var m = t.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:\s*[-–]\s*(\d{1,2}))?,?\s+(\d{4})/);
+  if (m) { var mo = months[m[1]]; return { start: iso(m[4], mo, m[2]), end: iso(m[4], mo, m[3] || m[2]) }; }
+
+  // "8/21/2026 - 8/23/2026"
+  var full = t.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s*[-–]\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (full) return { start: iso(full[3], full[1], full[2]), end: iso(full[6], full[4], full[5]) };
+
+  // "8/21-22/2026"
+  var span = t.match(/(\d{1,2})\/(\d{1,2})\s*[-–]\s*(\d{1,2})\/(\d{4})/);
+  if (span) return { start: iso(span[4], span[1], span[2]), end: iso(span[4], span[1], span[3]) };
+
+  // "8/21/2026"
+  var one = t.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (one) return { start: iso(one[3], one[1], one[2]), end: iso(one[3], one[1], one[2]) };
+
+  return { start: "9999-99-99", end: "9999-99-99" };
 }
 
 // Tours drop off the tracker RETENTION_DAYS after their end date. The window is
