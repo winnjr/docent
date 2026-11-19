@@ -524,11 +524,7 @@ Thank you for coming. Come back, and bring somebody with you.&rdquo;</div>
     </div>
     <div class="band-body">
   <div class="panel">
-    Send a thank-you to visitors who share their email. The button opens a ready-to-send message - add the visitor's address, personalize one line about their tour, and send.
-    <div style="margin-top:12px;">
-      <a class="bigbtn" id="followupbtn" href="#" target="_blank" rel="noopener">Compose follow-up email</a>
-    </div>
-    <div class="note">Until the shared docent account is set up, this sends from whichever Google account you are signed into. Once the shared account exists, sign into it first so replies come back to the team.</div>
+    Do not follow up with visitors from your personal email address. Until the shared docent email account is created, give the visitor&rsquo;s request and contact details to the staff member on duty, and museum staff follow up.
   </div>
     </div>
   </section>
@@ -924,9 +920,12 @@ var FOLLOWUP_BODY =
   "The Docent Team\n" +
   "Minnesota Military & Veterans Museum, Camp Ripley\n";
 
-document.getElementById("followupbtn").href =
-  "https://mail.google.com/mail/?view=cm&fs=1&su=" + encodeURIComponent(FOLLOWUP_SUBJECT) +
-  "&body=" + encodeURIComponent(FOLLOWUP_BODY);
+var followupBtn = document.getElementById("followupbtn");
+if (followupBtn) {
+  followupBtn.href =
+    "https://mail.google.com/mail/?view=cm&fs=1&su=" + encodeURIComponent(FOLLOWUP_SUBJECT) +
+    "&body=" + encodeURIComponent(FOLLOWUP_BODY);
+}
 
 var activeAud = 0;
 
